@@ -1,7 +1,6 @@
 <template>
   <Transfer
     :data-source="getdataSource"
-    show-search
     :filter-option="filterOption"
     :render="(item) => item.title"
     :showSelectAll="showSelectAll"
@@ -13,27 +12,28 @@
 </template>
 
 <script lang="ts">
-  import { computed, defineComponent, watch, ref, unref, watchEffect } from 'vue';
+  import { computed, defineComponent, watch, ref, unref, watchEffect, PropType } from 'vue';
   import { Transfer } from 'ant-design-vue';
   import { isFunction } from '/@/utils/is';
   import { get, omit } from 'lodash-es';
   import { propTypes } from '/@/utils/propTypes';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { TransferDirection, TransferItem } from 'ant-design-vue/lib/transfer';
+
   export default defineComponent({
     name: 'ApiTransfer',
     components: { Transfer },
     props: {
-      value: { type: Array<string> },
+      value: { type: Array as PropType<Array<string>> },
       api: {
-        type: Function as PropType<(arg?: Recordable) => Promise<TransferItem[]>>,
+        type: Function as PropType<(arg) => Promise<TransferItem[]>>,
         default: null,
       },
       params: { type: Object },
-      dataSource: { type: Array<TransferItem> },
+      dataSource: { type: Array as PropType<Array<TransferItem>> },
       immediate: propTypes.bool.def(true),
       alwaysLoad: propTypes.bool.def(false),
-      afterFetch: { type: Function as PropType<Fn> },
+      afterFetch: { type: Function },
       resultField: propTypes.string.def(''),
       labelField: propTypes.string.def('title'),
       valueField: propTypes.string.def('key'),
@@ -42,9 +42,9 @@
       filterOption: {
         type: Function as PropType<(inputValue: string, item: TransferItem) => boolean>,
       },
-      selectedKeys: { type: Array<string> },
+      selectedKeys: { type: Array as PropType<Array<string>> },
       showSelectAll: { type: Boolean, default: false },
-      targetKeys: { type: Array<string> },
+      targetKeys: { type: Array as PropType<Array<string>> },
     },
     emits: ['options-change', 'change'],
     setup(props, { attrs, emit }) {
@@ -61,7 +61,7 @@
       const getdataSource = computed(() => {
         const { labelField, valueField } = props;
 
-        return unref(_dataSource).reduce((prev, next: Recordable) => {
+        return unref(_dataSource).reduce((prev, next) => {
           if (next) {
             prev.push({
               ...omit(next, [labelField, valueField]),
@@ -78,6 +78,9 @@
         }
         if (Array.isArray(props.value)) {
           return props.value;
+        }
+        if (Array.isArray(props.targetKeys)) {
+          return props.targetKeys;
         }
         return [];
       });
@@ -123,7 +126,6 @@
           emitChange();
         } catch (error) {
           console.warn(error);
-        } finally {
         }
       }
       function emitChange() {
